@@ -10,3 +10,6 @@ ARG UID=1000
 RUN echo "xdebug.mode=develop,debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 RUN groupmod -g $GID app && \
     usermod -g $GID -u $UID app
+
+RUN docker-php-ext-configure pcntl --enable-pcntl \
+  && docker-php-ext-install pcntl sockets

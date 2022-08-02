@@ -10,23 +10,27 @@ services:
     environment:
         - "discovery.type=single-node"
 
-  php56:
-    links:
-      - elasticsearch7
   php70:
     links:
       - elasticsearch7
+      - elasticsearch7:elasticsearch
   php71:
     links:
       - elasticsearch7
+      - elasticsearch7:elasticsearch
   php72:
     links:
       - elasticsearch7
+      - elasticsearch7:elasticsearch
   php73:
     links:
       - elasticsearch7
+      - elasticsearch7:elasticsearch
   php74:
     links:
       - elasticsearch7
-
-
+      - elasticsearch7:elasticsearch
+  php81:
+    links:
+      - elasticsearch7
+      - elasticsearch7:elasticsearch

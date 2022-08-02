@@ -1,0 +1,12 @@
+
+dc yml build/dist/docker-compose-dbclient-mariadb.yml;
+
+dc service dbclient;
+
+dc nodeps;
+dc interactive;
+
+dc cmd mysql "-hmariadb -uroot -p${MARIADB_ROOT_PASSWORD}";
+dc run "$@";
+return $?;
+

@@ -1,0 +1,120 @@
+STORE_DIR=null
+PROJECT=null
+BRANCH=staging
+
+function init() {
+  if [ -z $PROJECT ]; then
+    mkdir -p $PROJECT    
+  fi
+
+  if [ ! -d $STORE_DIR ]; then
+    mkdir -p $STORE_DIR
+  fi
+
+  # git config user.name "Danilo Tharssis - Smart Age Solutions"
+  # git config user.email "danilo.araujo@smartagesolutions.com"
+}
+
+function composerInstall() 
+{
+  echo "### CLONING REPOSITORY ###"
+
+  cd $STORE_DIR
+
+  CLONE="git@git.smartagehosting.com:MagentoV2/sites"
+  
+  git clone $CLONE/$PROJECT.git .
+  
+  echo "### GIT CONFIG ###"
+  
+  git config user.name "Danilo Tharssis - Smart Age Solutions"
+  git config user.email "danilo.araujo@smartagesolutions.com"
+
+  echo "### COMPOSER INSTALL ###"
+  dev console php -d memory_limit=-1 /usr/local/bin/composer1 install
+  
+  # Install magento default (last version)
+  #dev console php -d memory_limit=-1 /usr/local/bin/composer2 create-project --repository-url=https://repo.magento.com/ magento/project-community-edition .
+}
+
+function importDb() 
+{
+
+  #  NEED CONFIGURE DUMP.SQL
+  #
+  #
+
+  if [ -z $PROJECT ]; then
+    printf '%s\n' "ERROR: Please enter PROJECT name" >&2
+    exit 1
+  fi
+
+  setEnv;
+  cd $STORE_DIR
+
+  cd '../'
+
+  echo "### REMOVE DEFINER ###"
+  sed -i 's/DEFINER[ ]*=[ ]*[^*]*\*/\*/' .dump.sql
+
+  echo "### START DUMP ####"
+  /usr/bin/mysql -h 127.0.0.1 -u root -pmagento2 --port 3308 $PROJECT < .dump.sql
+}
+
+function magentoInstall()
+{
+  cd $STORE_DIR
+  # cd /data/<magento install directory>
+  find var generated vendor pub/static pub/media app/etc -type f -exec chmod g+w {} +
+  find var generated vendor pub/static pub/media app/etc -type d -exec chmod g+ws {} +
+  # chown -R :www-data . # Ubuntu
+  # chmod u+x bin/magento
+
+  dev console php bin/magento module:disable {Magento_Elasticsearch,Magento_InventoryElasticsearch,Magento_Elasticsearch6,Magento_Elasticsearch7}
+
+  dev console bin/magento setup:install \
+  --base-url="http://$PROJECT.magento2.localhost/" \
+  --base-url-secure="https://$PROJECT.magento2.localhost/" \
+  --db-host=mariadb \
+  --db-name=$PROJECT \
+  --db-user=root \
+  --db-password=magento2 \
+  --admin-firstname=Danilo \
+  --admin-lastname=Araujo \
+  --admin-email=danilo.araujo@smartagesolution.com \
+  --admin-user=tharssis \
+  --admin-password=sas1234 \
+  --backend-frontname=mngr \
+  --language=en_US \
+  --currency=USD \
+  --timezone=UTC \
+  --use-rewrites=1
+  # --search-engine=elasticsearch7 \
+  # --elasticsearch-host=es-host.example.com \
+  # --elasticsearch-port=9200 \
+  # --elasticsearch-index-prefix=magento2 \
+  # --elasticsearch-timeout=15
+  # ELASTIC NOT WORKING
+}
+
+function cleanCache()
+{
+  cd $STORE_DIR
+  dev c:f
+}
+
+echo "### INIT ###"
+
+while getopts "p:ac" OPT; do
+  case "$OPT" in
+  "p") 
+    PROJECT=${OPTARG};
+    STORE_DIR="${DEVBOX}/$PROJECT/magento2";
+    ;;
+  "a") init ;;
+  "c") composerInstall ;;
+  "*") exit 1 ;;
+  esac
+done
+
+echo "### FINISH ###"

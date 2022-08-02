@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  dbclient:
+    image: mariadb:10.4
+    links:
+      - mariadb
+    network_mode: bridge
